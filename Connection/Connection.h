@@ -4,7 +4,7 @@
 #define PROXY_CONNECTION_H
 
 #include <sys/socket.h>
-#include "../Cache.h"
+#include "../Cache/Cache.h"
 #include <unistd.h>
 
 class Connection {

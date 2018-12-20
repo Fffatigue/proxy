@@ -12,13 +12,15 @@
 #include "Connection/DirectConnection.h"
 #include "Utils.h"
 #include "Connection/ErrorConnection.h"
+#include "Connection/CachingConnection.h"
 
 #define DEBUG
+
 void ConnectionsHandler::process_enqueued(fd_set &rdfds) {
     for (std::map<int, std::vector<char> >::iterator i = _queue.begin(); i != _queue.end();) {
         if (FD_ISSET(i->first, &rdfds)) {
             read_request(i++);
-        }else{
+        } else {
             ++i;
         }
     }
@@ -41,7 +43,7 @@ void ConnectionsHandler::fill_fd_set(fd_set &rdfds, fd_set &wrfds) {
             (*i)->fill_fd_set(rdfds, wrfds);
         } else {
             //TODO checking and deleting cache
-            delete(*i);
+            delete (*i);
             _connections.erase(i++);
             continue;
         }
@@ -67,48 +69,59 @@ void ConnectionsHandler::add_connection(std::map<int, std::vector<char> >::itera
     struct phr_header headers[100];
     size_t prevbuflen = 0, method_len, path_len, num_headers;
     num_headers = sizeof(headers) / sizeof(headers[0]);
-    pret = phr_parse_request(client->second.data(), endpos, &method, &method_len, &path, &path_len,
+    char buf[BUF_SIZE];
+    for (int i = 0; i < endpos; i++) {
+        buf[i] = client->second[i];
+    }
+    pret = phr_parse_request(buf, endpos, &method, &method_len, &path, &path_len,
                              &minor_version, headers, &num_headers, prevbuflen);
 #ifdef DEBUG
     printf("method is %.*s\n", (int) method_len, method);
     printf("path is %.*s\n", (int) path_len, path);
     printf("HTTP version is 1.%d\n", minor_version);
 #endif
-    if(minor_version != 0){
+    if (minor_version != 0) {
         client->second[method_len + path_len + 9] = '0';
-       // _connections.push_back(new ErrorConnection(client_sock,"HTTP/1.0 505 HTTP Version Not Supported\r\n\r\n"));
-       // _queue.erase(client);
-       // return;
+        // _connections.push_back(new ErrorConnection(client_sock,"HTTP/1.0 505 HTTP Version Not Supported\r\n\r\n"));
+        // _queue.erase(client);
+        // return;
     }
-
     if (!strncmp(method, "GET", 3)) {
         std::pair<std::string, int> url_port;
         for (int i = 0; i < num_headers; i++) {
-            if(!strncmp(headers[i].name, "Host", headers[i].name_len < 4 ? headers[i].name_len : 4)){
-                url_port =  Utils::parsePath(headers[i].value, headers[i].value_len);
+            if (!strncmp(headers[i].name, "Host", headers[i].name_len < 4 ? headers[i].name_len : 4)) {
+                url_port = Utils::parsePath(headers[i].value, headers[i].value_len);
                 break;
             }
         }
-        //TODO add erase if we don't find host param
-        int forwarding_sock = socket(AF_INET, SOCK_STREAM, 0);
-        int forward_port = url_port.second == -1 ? 80 : url_port.second;
-        sockaddr_in forwaddr;
-        try {
-            forwaddr = Utils::get_sockaddr(url_port.first.c_str(), forward_port);
-        } catch (std::invalid_argument &e) {
-            _queue.erase(client);
+        //TODO add erase if we don't find host param and send error
+        Cache *cache = cacheController_.getCache(std::string(path, path_len));
+        if (cache == NULL || cache->getState() == Cache::CACHING || cache->getState() == Cache::NOCACHEABLE) {
+            int forwarding_sock = socket(AF_INET, SOCK_STREAM, 0);
+            int forward_port = url_port.second == -1 ? 80 : url_port.second;
+            sockaddr_in forwaddr;
+            try {
+                forwaddr = Utils::get_sockaddr(url_port.first.c_str(), forward_port);
+            } catch (std::invalid_argument &e) {
+                _queue.erase(client);
+                close(client_sock);
+                return;
+            }
+            _maxfd = std::max(_maxfd, forwarding_sock);
+            if (cache == NULL || cache->getState() == Cache::NOCACHEABLE) {
+                _connections.push_back(new DirectConnection(client_sock, forwarding_sock, client->second,
+                                                            &forwaddr));
+            } else {
+                _connections.push_back(new CachingConnection(client_sock,forwarding_sock,client->second,&forwaddr, cache));
+            }
             return;
+        } else {
+            _connections.push_back(new CachedConnection());
         }
-        _maxfd = std::max(_maxfd, forwarding_sock);
-        _connections.push_back(new DirectConnection(client_sock, forwarding_sock, client->second, &forwaddr));
-        _queue.erase(client);
-        return;
-    }else{
-        _connections.push_back(new ErrorConnection(client_sock,"HTTP/1.0 501 Not Implemented\r\n\r\n"));
-        _queue.erase(client);
-        return;
+    } else {
+        _connections.push_back(new ErrorConnection(client_sock, "HTTP/1.0 501 Not Implemented\r\n\r\n"));
     }
-    //TODO caching decision
+    _queue.erase(client);
 }
 
 void ConnectionsHandler::read_request(std::map<int, std::vector<char> >::iterator client) {

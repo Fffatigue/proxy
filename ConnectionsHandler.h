@@ -9,9 +9,12 @@
 #include <vector>
 #include <map>
 #include "Connection/Connection.h"
+#include "Cache/CacheController.h"
 #include <list>
+
 class ConnectionsHandler {
 private:
+    CacheController cacheController_;
     const static int BUF_SIZE = 1000000;
     int _listensockfd;
     std::list<Connection*> _connections;

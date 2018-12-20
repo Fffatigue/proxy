@@ -22,6 +22,7 @@ int Cache::putCache(char *buf, int length) {
     }
     if (length + (*cache).size() > MAX_CACHE_SIZE) {
         state_ = NOCACHEABLE;
+        delete(cache);
         return state_;
     }
     unsigned long offset = (*cache).size();
@@ -35,6 +36,23 @@ void Cache::setCached() {
     state_ = CACHED;
 }
 
-Cache::Cache() : state_(CACHING) {
+Cache::Cache() : state_(CACHING), clients_using(1){
     cache = new std::vector<char>;
+}
+
+void Cache::mark_using() {
+    clients_using++;
+}
+
+void Cache::mark_no_using() {
+    clients_using--;
+}
+
+bool Cache::is_using() {
+    return clients_using == 0;
+}
+
+void Cache::dropCache() {
+    delete(cache);
+    state_ = DROPPED;
 }

@@ -9,7 +9,7 @@ void CachedConnection::fill_fd_set(fd_set &rdfds, fd_set &wrfds) {
 }
 
 void CachedConnection::exchange_data(const fd_set &rdfds, const fd_set &wrfds) {
-
+    
 }
 
 void CachedConnection::disconnect() {
