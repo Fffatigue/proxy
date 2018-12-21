@@ -10,10 +10,11 @@
 
 class CachedConnection : public Connection{
 private:
-    void disconnect();
+    int offset;
     int client_socket_;
-    Cache cache_;
+    Cache* cache_;
 public:
+    CachedConnection(int client_socket,Cache* cache);
     void fill_fd_set(fd_set& rdfds, fd_set& wrfds);
     void exchange_data(const fd_set& rdfds, const fd_set& wrfds);
 };

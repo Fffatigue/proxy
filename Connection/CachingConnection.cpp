@@ -8,6 +8,9 @@ void CachingConnection::fill_fd_set(fd_set &rdfds, fd_set &wrfds) {
     if (data_f_c_ == 0) {
         FD_SET(forwarding_socket_, &rdfds);
     }
+    if (data_c_f_ != 0) {
+        FD_SET(forwarding_socket_, &wrfds);
+    }
     FD_SET(client_socket_, &wrfds);
 }
 

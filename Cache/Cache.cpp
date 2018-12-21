@@ -9,7 +9,7 @@ int Cache::getCache(char *buf, int offset, int length) {
     if (state_ != CACHED) {
         return -1;
     }
-    length = (length + offset < (*cache).size()) ? length + offset : offset;
+    length = (length + offset < cache->size()) ? length + offset : cache->size();
     for (int i = offset; i < length; i++) {
         buf[i - offset] = (*cache)[i];
     }
@@ -25,9 +25,8 @@ int Cache::putCache(char *buf, int length) {
         delete(cache);
         return state_;
     }
-    unsigned long offset = (*cache).size();
     for (int i = 0; i < length; i++) {
-        (*cache)[offset + i] = buf[i];
+        (*cache).push_back(buf[i]);
     }
     return state_;
 }

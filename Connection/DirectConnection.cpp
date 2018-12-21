@@ -18,15 +18,21 @@ void DirectConnection::fill_fd_set(fd_set &rdfds, fd_set &wrfds) {
 }
 
 void DirectConnection::exchange_data(const fd_set &rdfds, const fd_set &wrfds) {
-    if (active) {
-        recvfc(rdfds);
+    ssize_t ret;
+    sendcf(wrfds);
+    recvfc(rdfds);
+
+    if (data_f_c_ != 0 && FD_ISSET(client_socket_, &wrfds)) {
+        size_t send_size = data_f_c_ > MAX_SEND_SIZE ? MAX_SEND_SIZE : data_f_c_;
+        ret = send(client_socket_, &buf_fc_[fcoffset], send_size, 0);
+        if (ret == -1) {
+            active = false;
+            return;
+        }
+        data_f_c_ -= ret;
+        fcoffset += ret;
     }
-    if (active) {
-        sendfc(wrfds);
-    }
-    if (active) {
-        sendcf(wrfds);
-    }
+
 }
 
 
@@ -34,8 +40,7 @@ DirectConnection::DirectConnection(int client_socket, int forwarding_socket, std
                                    sockaddr_in *serveraddr) :
         forwarding_socket_(forwarding_socket),
         serveraddr_(serveraddr),
-        data_f_c_(0),
-        data_c_f_(0), fcoffset(0), cfoffset(0) {
+        data_c_f_(0), cfoffset(0) {
     client_socket_ = client_socket;
     for (int i = 0; i < buf_cf.size(); i++) {
         buf_cf_[i] = buf_cf[i];
@@ -55,7 +60,7 @@ void DirectConnection::connect() {
         std::cout << "Failed to connect! Retry in " << numsec << " seconds" << std::endl;
         sleep(numsec);
     }
-    throw std::runtime_error(std::string("connect: ") + strerror(errno));
+    active = false;
 }
 
 DirectConnection::~DirectConnection() {
@@ -76,20 +81,6 @@ void DirectConnection::recvfc(const fd_set &rdfds) {
         data_f_c_ = ret;
     }
 
-}
-
-void DirectConnection::sendfc(const fd_set &wrfds) {
-    ssize_t ret;
-    if (data_f_c_ != 0 && FD_ISSET(client_socket_, &wrfds)) {
-        size_t send_size = data_f_c_ > MAX_SEND_SIZE ? MAX_SEND_SIZE : data_f_c_;
-        ret = send(client_socket_, &buf_fc_[fcoffset], send_size, 0);
-        if (ret == -1) {
-            active = false;
-            return;
-        }
-        data_f_c_ -= ret;
-        fcoffset += ret;
-    }
 }
 
 void DirectConnection::sendcf(const fd_set &wrfds) {

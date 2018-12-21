@@ -7,6 +7,7 @@
 #include <string>
 #include <cstring>
 #include <netinet/in.h>
+#include <fcntl.h>
 
 #include "Server.h"
 #include "Utils.h"
@@ -27,6 +28,9 @@ Server::Server(int listen_port) :
 
     if (listen(listen_sockfd_, SOMAXCONN)) {
         throw std::runtime_error(std::string("listen: ") + strerror(errno));
+    }
+    if (fcntl(listen_sockfd_, F_SETFL, fcntl(listen_sockfd_, F_GETFL, 0) | O_NONBLOCK) == -1) {
+        throw std::runtime_error("Can't make server socket nonblock!");
     }
 }
 

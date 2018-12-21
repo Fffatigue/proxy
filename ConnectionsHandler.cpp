@@ -13,6 +13,7 @@
 #include "Utils.h"
 #include "Connection/ErrorConnection.h"
 #include "Connection/CachingConnection.h"
+#include "Connection/CachedConnection.h"
 
 #define DEBUG
 
@@ -57,7 +58,6 @@ void ConnectionsHandler::data_exchange(fd_set &rdfds, fd_set &wrfds) {
     for (std::list<Connection *>::iterator i = _connections.begin(); i != _connections.end(); ++i) {
         (*i)->exchange_data(rdfds, wrfds);
     }
-
 }
 
 void ConnectionsHandler::add_connection(std::map<int, std::vector<char> >::iterator client, int endpos) {
@@ -75,11 +75,9 @@ void ConnectionsHandler::add_connection(std::map<int, std::vector<char> >::itera
     }
     pret = phr_parse_request(buf, endpos, &method, &method_len, &path, &path_len,
                              &minor_version, headers, &num_headers, prevbuflen);
-#ifdef DEBUG
     printf("method is %.*s\n", (int) method_len, method);
     printf("path is %.*s\n", (int) path_len, path);
     printf("HTTP version is 1.%d\n", minor_version);
-#endif
     if (minor_version != 0) {
         client->second[method_len + path_len + 9] = '0';
         // _connections.push_back(new ErrorConnection(client_sock,"HTTP/1.0 505 HTTP Version Not Supported\r\n\r\n"));
@@ -112,11 +110,12 @@ void ConnectionsHandler::add_connection(std::map<int, std::vector<char> >::itera
                 _connections.push_back(new DirectConnection(client_sock, forwarding_sock, client->second,
                                                             &forwaddr));
             } else {
-                _connections.push_back(new CachingConnection(client_sock,forwarding_sock,client->second,&forwaddr, cache));
+                _connections.push_back(new CachingConnection(client_sock,forwarding_sock,client->second,&forwaddr,cache));
             }
+            _queue.erase(client);
             return;
         } else {
-            _connections.push_back(new CachedConnection());
+            _connections.push_back(new CachedConnection(client_sock,cache));
         }
     } else {
         _connections.push_back(new ErrorConnection(client_sock, "HTTP/1.0 501 Not Implemented\r\n\r\n"));
