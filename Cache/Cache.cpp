@@ -1,4 +1,5 @@
 
+#include <cstdio>
 #include "Cache.h"
 
 int Cache::getState() {
@@ -12,7 +13,9 @@ int Cache::getCache(char *buf, int offset, int length) {
     length = (length + offset < cache->size()) ? length + offset : cache->size();
     for (int i = offset; i < length; i++) {
         buf[i - offset] = (*cache)[i];
+        printf("%c",(*cache)[i]);
     }
+    printf("\n");
     return length - offset;
 }
 

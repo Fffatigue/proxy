@@ -17,8 +17,11 @@ void CachingConnection::fill_fd_set(fd_set &rdfds, fd_set &wrfds) {
 void CachingConnection::exchange_data(const fd_set &rdfds, const fd_set &wrfds) {
     if (active) {
         recvfc(rdfds);
-        if(active && isCacheable){
-            if(cache_->putCache(buf_fc_,data_f_c_) != Cache::CACHING){
+        if (!active) {
+            cache_->setCached(); //TODO ERRORCHECK
+        }
+        if (active && isCacheable) {
+            if (cache_->putCache(buf_fc_, data_f_c_) != Cache::CACHING) {
                 isCacheable = false;
             }
         }
@@ -39,7 +42,5 @@ CachingConnection::CachingConnection(int client_socket, int forwarding_socket, s
                                                                                                forwarding_socket,
                                                                                                buf_cf,
                                                                                                serveraddr),
-                                                                              cache_(cache), isCacheable(true) {
-
-}
+                                                                              cache_(cache), isCacheable(true) {}
 

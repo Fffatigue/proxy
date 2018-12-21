@@ -13,7 +13,7 @@ private:
     int state_;
     int clients_using;
     std::vector<char>* cache;
-    static const int MAX_CACHE_SIZE = 10000;
+    static const int MAX_CACHE_SIZE = 1000000;
 public:
     Cache();
     enum STATE{CACHED, CACHING, NOCACHEABLE, DROPPED };

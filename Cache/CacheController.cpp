@@ -7,12 +7,15 @@ Cache *CacheController::getCache(std::string path) {
     if (cacheEntry == cacheMap_.end()) {
         cache = new Cache();
         cacheMap_[path] = cache;
+        return cache;
     } else if (cacheEntry->second->getState() == Cache::CACHED) {
-        cache = cacheMap_[path];
+        cache = cacheEntry->second;
         cache->is_using();
-    } else if(cacheEntry->second->getState() == Cache::DROPPED){
+        return cache;
+    } else if(cacheEntry->second->getState() == Cache::DROPPED){//TODO delete
         cache = new Cache();
         cacheMap_[path] = cache;
+        return cache;
     }
-    return cache;
+    return NULL;
 }

@@ -11,7 +11,6 @@
 class CachedConnection : public Connection{
 private:
     int offset;
-    int client_socket_;
     Cache* cache_;
 public:
     CachedConnection(int client_socket,Cache* cache);

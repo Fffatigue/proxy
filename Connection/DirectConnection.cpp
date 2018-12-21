@@ -21,20 +21,9 @@ void DirectConnection::exchange_data(const fd_set &rdfds, const fd_set &wrfds) {
     ssize_t ret;
     sendcf(wrfds);
     recvfc(rdfds);
-
-    if (data_f_c_ != 0 && FD_ISSET(client_socket_, &wrfds)) {
-        size_t send_size = data_f_c_ > MAX_SEND_SIZE ? MAX_SEND_SIZE : data_f_c_;
-        ret = send(client_socket_, &buf_fc_[fcoffset], send_size, 0);
-        if (ret == -1) {
-            active = false;
-            return;
-        }
-        data_f_c_ -= ret;
-        fcoffset += ret;
-    }
+    sendfc(wrfds);
 
 }
-
 
 DirectConnection::DirectConnection(int client_socket, int forwarding_socket, std::vector<char> buf_cf,
                                    sockaddr_in *serveraddr) :
@@ -59,7 +48,7 @@ void DirectConnection::connect() {
         }
         std::cout << "Failed to connect! Retry in " << numsec << " seconds" << std::endl;
         sleep(numsec);
-    }
+    }//TODO add sending error msg and deleting cache
     active = false;
 }
 
