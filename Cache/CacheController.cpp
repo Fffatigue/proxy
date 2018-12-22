@@ -3,8 +3,6 @@
 #include <iostream>
 #include "CacheController.h"
 
-#define DEBUG
-
 Cache *CacheController::getCache(std::string path) {
     Cache *cache = NULL;
     CacheMap::iterator cacheEntry = cacheMap_.find(path);

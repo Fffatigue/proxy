@@ -36,7 +36,7 @@ void Cache::setCached() {
     state_ = CACHED;
 }
 
-Cache::Cache(std::string& path) : state_(CACHING), clientsUsing_(0), path_(path) {};
+Cache::Cache(std::string &path) : state_(CACHING), clientsUsing_(0), path_(path) {};
 
 void Cache::markUsing() {
     clientsUsing_++;
@@ -47,7 +47,7 @@ void Cache::markNoUsing() {
 }
 
 bool Cache::isUsing() {
-    if(clientsUsing_<0) {
+    if (clientsUsing_ < 0) {
         printf("%d\n", clientsUsing_);
         exit(0);
     }

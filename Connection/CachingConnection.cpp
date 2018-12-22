@@ -13,40 +13,49 @@ void CachingConnection::fill_fd_set(fd_set &rdfds, fd_set &wrfds) {
 }
 
 void CachingConnection::exchange_data(const fd_set &rdfds, const fd_set &wrfds) {
-    if (active) {
-        recvfc(rdfds);
-        if (!active && isCacheable) {
-            cache_->setCached(); //TODO ERRORCHECK
+    if (active_) {
+        int ret = recvfc(rdfds);
+        if (!active_ && isCacheable_) {
+            if (ret) {
+                cache_->drop();
+                isCacheable_ = false;
+            } else {
+                cache_->setCached();
+            }
         }
-        if (active && isCacheable) {
+        if (active_ && isCacheable_) {
             if (cache_->putCache(buf_fc_, data_f_c_) != Cache::CACHING) {
-                isCacheable = false;
+                isCacheable_ = false;
             }
         }
     }
-    if (connected) {
-        if (active) {
+    if (connected_) {
+        if (active_) {
             sendfc(wrfds);
-            if (!active) {
+            if (!active_) {
                 cache_->drop();
             }
         }
-        if (active) {
+        if (active_) {
             sendcf(wrfds);
-            //TODO drop cache
+            if (!active_) {
+                cache_->drop();
+                isCacheable_ = false;
+            }
         }
     }
 
 }
 
-CachingConnection::CachingConnection(int client_socket, int forwarding_socket, std::vector<char>& buf_cf,
+CachingConnection::CachingConnection(int client_socket, int forwarding_socket, std::vector<char> &buf_cf,
                                      sockaddr_in *serveraddr, Cache *cache) : DirectConnection(client_socket,
                                                                                                forwarding_socket,
                                                                                                buf_cf,
                                                                                                serveraddr),
-                                                                              cache_(cache), isCacheable(true) {
-    if (!connected) {
-        //TODO drop
+                                                                              cache_(cache), isCacheable_(true) {
+    if (!connected_) {
+        cache->drop();
+        isCacheable_ = false;
     }
 }
 

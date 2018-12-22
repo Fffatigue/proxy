@@ -8,7 +8,7 @@
 
 class CachingConnection : public DirectConnection {
     Cache *cache_;
-    bool isCacheable;
+    bool isCacheable_;
 public:
     void fill_fd_set(fd_set &rdfds, fd_set &wrfds);
 

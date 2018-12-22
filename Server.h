@@ -4,7 +4,6 @@
 
 
 class Server {
-private:
     int listen_sockfd_;
 public:
     explicit Server(int listen_port);

@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <string>
+
 class Cache {
     std::string path_;
     int state_;
@@ -11,12 +12,14 @@ class Cache {
     std::vector<char> cache_;
     static const int MAX_CACHE_SIZE = 1000000;
 public:
-    explicit Cache(std::string&);
+    explicit Cache(std::string &);
 
     enum STATE {
         CACHED, CACHING, NOCACHEABLE, DROPPED
     };
-    std::string& getPath();
+
+    std::string &getPath();
+
     int getState();
 
     int getCache(char *buf, int offset, int length);

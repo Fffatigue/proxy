@@ -6,7 +6,7 @@
 #include "Connection.h"
 
 class CachedConnection : public Connection {
-    int offset;
+    int offset_;
     Cache *cache_;
 public:
     CachedConnection(int client_socket, Cache *cache);

@@ -20,7 +20,7 @@ void DirectConnection::fill_fd_set(fd_set &rdfds, fd_set &wrfds) {
 }
 
 void DirectConnection::exchange_data(const fd_set &rdfds, const fd_set &wrfds) {
-    if (connected) {
+    if (connected_) {
         sendcf(wrfds);
         recvfc(rdfds);
     }
@@ -29,7 +29,7 @@ void DirectConnection::exchange_data(const fd_set &rdfds, const fd_set &wrfds) {
 }
 
 DirectConnection::DirectConnection(int client_socket, int forwarding_socket, std::vector<char>& buf_cf,
-                                   sockaddr_in *serveraddr) : connected(),
+                                   sockaddr_in *serveraddr) : connected_(),
                                                               forwarding_socket_(forwarding_socket), buf_cf_(),
                                                               serveraddr_(serveraddr),
                                                               data_c_f_(0), cfoffset(0) {
@@ -48,10 +48,10 @@ void DirectConnection::connect() {
     fcntl(forwarding_socket_, F_SETFL, fcntl(forwarding_socket_, F_GETFL, 0) | O_NONBLOCK);
     ret = ::connect(forwarding_socket_, reinterpret_cast<sockaddr *> (serveraddr_), sizeof(*serveraddr_));
     if (ret == 0 || errno == EINPROGRESS) {
-        connected = true;
+        connected_ = true;
         return;
     }
-    connected = false;
+    connected_ = false;
     std::string tmpbuf = "HTTP/1.0 522 Connection Timed Out\r\n\r\n";
     for (int i = 0; i < tmpbuf.size(); i++) {
         buf_fc_[i] = tmpbuf[i];
@@ -68,10 +68,10 @@ DirectConnection::~DirectConnection() {
 ssize_t DirectConnection::recvfc(const fd_set &rdfds) {
     ssize_t ret;
     if (data_f_c_ == 0 && FD_ISSET(forwarding_socket_, &rdfds)) {
-        fcoffset = 0;
+        fcoffset_ = 0;
         ret = recv(forwarding_socket_, buf_fc_, MAX_SEND_SIZE, 0);
-        if (ret == 0 || ret == -1) {
-            active = false;
+        if (ret == 0 || (ret == -1 && errno != EWOULDBLOCK) ) {
+            active_ = false;
             return ret;
         }
         data_f_c_ = ret;
@@ -87,8 +87,10 @@ void DirectConnection::sendcf(const fd_set &wrfds) {
         data_c_f_ -= ret;
         cfoffset += ret;
         if (ret == -1) {
-            active = false;
-            return;
+            if (errno != EWOULDBLOCK) {
+                active_ = false;
+                return;
+            }
         }
     }
 }

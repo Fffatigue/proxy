@@ -8,7 +8,7 @@
 
 class DirectConnection : public Connection {
 protected:
-    bool connected;
+    bool connected_;
     int forwarding_socket_;
     char buf_cf_[MAX_SEND_SIZE];
     ssize_t data_c_f_;

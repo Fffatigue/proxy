@@ -10,19 +10,18 @@
 #include <list>
 
 class ConnectionsHandler {
-private:
     CacheController cacheController_;
     const static int MAX_REQUEST_SIZE = 100000;
-    std::list<Connection *> _connections;
-    std::map<int, std::vector<char> > _queue;
-    int _maxfd;
-
+    std::list<Connection *> connections_;
+    std::map<int, std::vector<char> > queue_;
+    int maxfd_;
+private:
     void process_enqueued(fd_set &rdfds);
 
     void read_request(std::map<int, std::vector<char> >::iterator client);
 
 public:
-    ConnectionsHandler() : _maxfd(0) {};
+    ConnectionsHandler();
 
     void enqueue_connection(int client_sock);
 

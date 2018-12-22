@@ -8,13 +8,12 @@
 #include "ConnectionsHandler.h"
 
 class Proxy {
-private:
     fd_set rdfds_;
     fd_set wrfds_;
     int listen_sockfd_;
     int maxfd_;
     Server server_;
-
+private:
     ConnectionsHandler connections_handler;
 
     bool add_fd(int sockfd);

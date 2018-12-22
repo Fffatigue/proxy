@@ -44,6 +44,7 @@ int Server::accept() {
     if (client_sock < 0) {
         throw std::runtime_error(std::string("accept: ") + strerror(errno));
     }
+    fcntl(client_sock, F_SETFL, fcntl(client_sock, F_GETFL, 0) | O_NONBLOCK);
     return client_sock;
 }
 
