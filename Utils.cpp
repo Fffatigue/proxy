@@ -10,11 +10,12 @@
 #include <sstream>
 #include <cstring>
 #include <cstdio>
+#include <vector>
 #include "Utils.h"
+#include "third-party/picohttpparser.h"
 
-int Utils::parse_port(const char* s_port)
-{
-    char* ret;
+int Utils::parse_port(const char *s_port) {
+    char *ret;
     errno = 0;
     int port = strtol(s_port, &ret, 10);
     if (errno != 0) {
@@ -26,8 +27,7 @@ int Utils::parse_port(const char* s_port)
     return port;
 }
 
-struct sockaddr_in Utils::get_sockaddr(const char* name, int port)
-{
+struct sockaddr_in Utils::get_sockaddr(const char *name, int port) {
     struct sockaddr_in sock_addr;
     struct addrinfo *addr = NULL;
     memset(&sock_addr, 0, sizeof(sock_addr));
@@ -50,8 +50,7 @@ struct sockaddr_in Utils::get_sockaddr(const char* name, int port)
     return sock_addr;
 }
 
-void Utils::prepare_hints(struct addrinfo* hints)
-{
+void Utils::prepare_hints(struct addrinfo *hints) {
     memset(hints, 0, sizeof(addrinfo));
     hints->ai_family = AF_INET;
     hints->ai_socktype = SOCK_STREAM;
@@ -70,7 +69,7 @@ std::pair<std::string, int> Utils::parsePath(const char *path, int pathlen) {
         }
         if (path[i] == ':') {
             parse_port = true;
-            url = std::string(path + 11, i - 11);
+            url = std::string(path, i - 1);
         }
     }
     if (!parse_port) {
@@ -78,4 +77,28 @@ std::pair<std::string, int> Utils::parsePath(const char *path, int pathlen) {
     } else {
         return (std::pair<std::string, int>(url, port));
     }
+}
+
+void Utils::makeNewRequest(char *oldRequest, std::vector<char>& newRequest, struct phr_header *headers, int headers_num) {
+    for (int i = 0; oldRequest + i != headers[0].name; i++) {
+        newRequest.push_back(oldRequest[i]);
+    }
+    for (int i = 0; i < headers_num; i++) {
+        if(!strncmp(headers[i].name, "Connection", headers[i].name_len < 10 ? headers[i].name_len : 10)){
+            break;
+        }else {
+            for (int k = 0; k < headers[i].name_len; k++) {
+                newRequest.push_back(headers[i].name[k]);
+            }
+            newRequest.push_back(':');
+            newRequest.push_back(' ');
+            for (int k = 0; k < headers[i].value_len; k++) {
+                newRequest.push_back(headers[i].value[k]);
+            }
+            newRequest.push_back('\r');
+            newRequest.push_back('\n');
+        }
+    }
+    newRequest.push_back('\r');
+    newRequest.push_back('\n');
 }

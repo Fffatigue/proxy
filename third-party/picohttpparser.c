@@ -617,3 +617,4 @@ int phr_decode_chunked_is_in_data(struct phr_chunked_decoder *decoder) {
 #undef CHECK_EOF
 #undef EXPECT_CHAR
 #undef ADVANCE_TOKEN
+

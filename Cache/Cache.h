@@ -1,31 +1,39 @@
-//
-// Created by cristina on 18.12.18.
-//
-
 #ifndef PROXY_CACHE_H
 #define PROXY_CACHE_H
 
 
 #include <vector>
-
+#include <string>
 class Cache {
-private:
+    std::string path_;
     int state_;
-    int clients_using;
-    std::vector<char>* cache;
+    int clientsUsing_;
+    std::vector<char> cache_;
     static const int MAX_CACHE_SIZE = 1000000;
 public:
-    Cache();
-    enum STATE{CACHED, CACHING, NOCACHEABLE, DROPPED };
+    explicit Cache(std::string&);
+
+    enum STATE {
+        CACHED, CACHING, NOCACHEABLE, DROPPED
+    };
+    std::string& getPath();
     int getState();
-    int getCache(char* buf, int offset, int length);
-    int putCache(char* buf, int length);
+
+    int getCache(char *buf, int offset, int length);
+
+    int putCache(char *buf, int length);
+
     void drop();
+
     void setCached();
-    void mark_using();
-    void mark_no_using();
-    bool is_using();
+
+    void markUsing();
+
+    void markNoUsing();
+
+    bool isUsing();
 };
 
 
-#endif //PROXY_CACHE_H
+#endif
+

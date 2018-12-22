@@ -4,13 +4,13 @@
 #include <stdexcept>
 #include <cstring>
 #include <cerrno>
+#include <cstdio>
 #include "Proxy.h"
 #include "Server.h"
 
 Proxy::Proxy(int listen_port) :
         server_(listen_port),
-        maxfd_(0)
-{
+        maxfd_(0) {
     add_fd(server_.get_listen_sockfd());
 }
 
@@ -18,7 +18,6 @@ void Proxy::run() {
     signal(SIGPIPE, SIG_IGN);
 
     while (true) {
-        int sock;
         prepare_sets();
         int selected = select(maxfd_ + 1, &rdfds_, &wrfds_, NULL, NULL);
         if (selected < 0) {

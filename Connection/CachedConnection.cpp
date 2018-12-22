@@ -1,6 +1,3 @@
-//
-// Created by cristina on 18.12.18.
-//
 
 #include <cstdio>
 #include "CachedConnection.h"
@@ -24,4 +21,9 @@ void CachedConnection::exchange_data(const fd_set &rdfds, const fd_set &wrfds) {
 
 CachedConnection::CachedConnection(int client_socket, Cache *cache) : cache_(cache),
                                                                       offset(0) { client_socket_ = client_socket; }
+
+CachedConnection::~CachedConnection() {
+    cache_->markNoUsing();
+}
+
 

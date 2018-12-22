@@ -10,15 +10,18 @@
 #include <set>
 #include "Cache.h"
 
-typedef std::map<std::string, Cache *> CacheMap;
-
 class CacheController {
-private:
+    typedef std::list<Cache *> CacheQueue;
+    typedef std::map<std::string, CacheQueue::iterator> CacheMap;
+    const static int MAX_CACHE_ENTRIES = 10;
     CacheMap cacheMap_;
-    std::list<CacheMap::iterator> cacheQueue_;
+    CacheQueue cacheQueue_;
+private:
+    bool dropCache();
 public:
     Cache *getCache(std::string Path);
 };
 
 
 #endif
+

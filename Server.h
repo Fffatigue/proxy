@@ -5,8 +5,6 @@
 
 class Server {
 private:
-    void process_connections();
-
     int listen_sockfd_;
 public:
     explicit Server(int listen_port);
@@ -18,3 +16,4 @@ public:
 
 
 #endif
+

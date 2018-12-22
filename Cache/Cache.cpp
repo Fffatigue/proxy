@@ -1,5 +1,6 @@
 
 #include <cstdio>
+#include <cstdlib>
 #include "Cache.h"
 
 int Cache::getState() {
@@ -10,9 +11,9 @@ int Cache::getCache(char *buf, int offset, int length) {
     if (state_ != CACHED) {
         return -1;
     }
-    length = (length + offset < cache->size()) ? length + offset : cache->size();
+    length = (length + offset < cache_.size()) ? length + offset : cache_.size();
     for (int i = offset; i < length; i++) {
-        buf[i - offset] = (*cache)[i];
+        buf[i - offset] = cache_[i];
     }
     return length - offset;
 }
@@ -21,13 +22,12 @@ int Cache::putCache(char *buf, int length) {
     if (state_ != CACHING) {
         return state_;
     }
-    if (length + (*cache).size() > MAX_CACHE_SIZE) {
+    if (length + cache_.size() > MAX_CACHE_SIZE) {
         state_ = NOCACHEABLE;
-        delete(cache);
         return state_;
     }
     for (int i = 0; i < length; i++) {
-        (*cache).push_back(buf[i]);
+        cache_.push_back(buf[i]);
     }
     return state_;
 }
@@ -36,22 +36,29 @@ void Cache::setCached() {
     state_ = CACHED;
 }
 
-Cache::Cache() : state_(CACHING), clients_using(1){
-    cache = new std::vector<char>;
+Cache::Cache(std::string& path) : state_(CACHING), clientsUsing_(0), path_(path) {};
+
+void Cache::markUsing() {
+    clientsUsing_++;
 }
 
-void Cache::mark_using() {
-    clients_using++;
+void Cache::markNoUsing() {
+    clientsUsing_--;
 }
 
-void Cache::mark_no_using() {
-    clients_using--;
-}
-
-bool Cache::is_using() {
-    return clients_using == 0;
+bool Cache::isUsing() {
+    if(clientsUsing_<0) {
+        printf("%d\n", clientsUsing_);
+        exit(0);
+    }
+    return !clientsUsing_ == 0;
 }
 
 void Cache::drop() {
     state_ = DROPPED;
 }
+
+std::string &Cache::getPath() {
+    return path_;
+}
+

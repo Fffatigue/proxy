@@ -1,7 +1,5 @@
-//
-// Created by cristina on 18.12.18.
-//
 
+#include <cstdio>
 #include "CachingConnection.h"
 
 void CachingConnection::fill_fd_set(fd_set &rdfds, fd_set &wrfds) {
@@ -17,7 +15,7 @@ void CachingConnection::fill_fd_set(fd_set &rdfds, fd_set &wrfds) {
 void CachingConnection::exchange_data(const fd_set &rdfds, const fd_set &wrfds) {
     if (active) {
         recvfc(rdfds);
-        if (!active) {
+        if (!active && isCacheable) {
             cache_->setCached(); //TODO ERRORCHECK
         }
         if (active && isCacheable) {
@@ -26,7 +24,7 @@ void CachingConnection::exchange_data(const fd_set &rdfds, const fd_set &wrfds) 
             }
         }
     }
-    if(connected) {
+    if (connected) {
         if (active) {
             sendfc(wrfds);
             if (!active) {
@@ -41,18 +39,18 @@ void CachingConnection::exchange_data(const fd_set &rdfds, const fd_set &wrfds) 
 
 }
 
-CachingConnection::CachingConnection(int client_socket, int forwarding_socket, std::vector<char> buf_cf,
+CachingConnection::CachingConnection(int client_socket, int forwarding_socket, std::vector<char>& buf_cf,
                                      sockaddr_in *serveraddr, Cache *cache) : DirectConnection(client_socket,
                                                                                                forwarding_socket,
                                                                                                buf_cf,
                                                                                                serveraddr),
                                                                               cache_(cache), isCacheable(true) {
-    if(!connected){
+    if (!connected) {
         //TODO drop
     }
 }
 
 CachingConnection::~CachingConnection() {
-    cache_->mark_no_using();
+    cache_->markNoUsing();
 }
 
