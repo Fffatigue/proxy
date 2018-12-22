@@ -20,6 +20,8 @@ Server::Server(int listen_port) :
     if (listen_sockfd_ >= FD_SETSIZE) {
         throw std::runtime_error(std::string("Socket number out of range for select"));
     }
+    int opt = 1;
+    setsockopt(listen_sockfd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     struct sockaddr_in listenaddr = Utils::get_sockaddr(NULL, listen_port);
 
     if (bind(listen_sockfd_, reinterpret_cast<struct sockaddr *>(&listenaddr), sizeof(listenaddr))) {

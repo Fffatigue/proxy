@@ -20,7 +20,7 @@ public:
     int getState();
     int getCache(char* buf, int offset, int length);
     int putCache(char* buf, int length);
-    void dropCache();
+    void drop();
     void setCached();
     void mark_using();
     void mark_no_using();

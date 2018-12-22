@@ -50,6 +50,8 @@ void ConnectionsHandler::fill_fd_set(fd_set &rdfds, fd_set &wrfds) {
         }
         ++i;
     }
+   // std::cout << "connections.size(): " << _connections.size() << std::endl;
+   // std::cout <<"queue.size(): "<<_queue.size()<<std::endl;
 }
 
 
@@ -61,7 +63,6 @@ void ConnectionsHandler::data_exchange(fd_set &rdfds, fd_set &wrfds) {
 }
 
 void ConnectionsHandler::add_connection(std::map<int, std::vector<char> >::iterator client, int endpos) {
-    //TODO parse request and add connection
     int client_sock = client->first;
     const char *path;
     const char *method;
@@ -78,11 +79,15 @@ void ConnectionsHandler::add_connection(std::map<int, std::vector<char> >::itera
     printf("method is %.*s\n", (int) method_len, method);
     printf("path is %.*s\n", (int) path_len, path);
     printf("HTTP version is 1.%d\n", minor_version);
+    for (int i = 0; i != num_headers; ++i) {
+        printf("%.*s: %.*s\n", (int)headers[i].name_len, headers[i].name,
+               (int)headers[i].value_len, headers[i].value);
+    }
     if (minor_version != 0) {
-        client->second[method_len + path_len + 9] = '0';
-        // _connections.push_back(new ErrorConnection(client_sock,"HTTP/1.0 505 HTTP Version Not Supported\r\n\r\n"));
-        // _queue.erase(client);
-        // return;
+ //       client->second[method_len + path_len + 9] = '0';
+         _connections.push_back(new ErrorConnection(client_sock,"HTTP/1.0 505 HTTP Version Not Supported\r\n\r\n"));
+         _queue.erase(client);
+         return;
     }
     if (!strncmp(method, "GET", 3)) {
         std::pair<std::string, int> url_port;

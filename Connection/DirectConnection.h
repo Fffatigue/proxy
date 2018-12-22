@@ -11,13 +11,14 @@
 
 class DirectConnection : public Connection {
 protected:
+    bool connected;
     int forwarding_socket_;
     char buf_cf_[MAX_SEND_SIZE];
     int data_c_f_;
     int cfoffset;
     sockaddr_in *serveraddr_;
     void connect();
-    void recvfc(const fd_set &rdfds);
+    int recvfc(const fd_set &rdfds);
     void sendcf(const fd_set &wrfds);
 public:
     virtual void fill_fd_set(fd_set &rdfds, fd_set &wrfds);

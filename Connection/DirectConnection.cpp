@@ -19,8 +19,10 @@ void DirectConnection::fill_fd_set(fd_set &rdfds, fd_set &wrfds) {
 
 void DirectConnection::exchange_data(const fd_set &rdfds, const fd_set &wrfds) {
     ssize_t ret;
-    sendcf(wrfds);
-    recvfc(rdfds);
+    if (connected) {
+        sendcf(wrfds);
+        recvfc(rdfds);
+    }
     sendfc(wrfds);
 
 }
@@ -41,15 +43,17 @@ DirectConnection::DirectConnection(int client_socket, int forwarding_socket, std
 
 void DirectConnection::connect() {
     int ret;
-    for (int numsec = 1; numsec <= 4; numsec *= 2) {
-        ret = ::connect(forwarding_socket_, reinterpret_cast<sockaddr *> (serveraddr_), sizeof(*serveraddr_));
-        if (ret == 0) {
-            return;
-        }
-        std::cout << "Failed to connect! Retry in " << numsec << " seconds" << std::endl;
-        sleep(numsec);
-    }//TODO add sending error msg and deleting cache
-    active = false;
+    ret = ::connect(forwarding_socket_, reinterpret_cast<sockaddr *> (serveraddr_), sizeof(*serveraddr_));
+    if (ret == 0) {
+        connected = true;
+        return;
+    }
+    connected = false;
+    std::string tmpbuf = "HTTP/1.0 522 Connection Timed Out\r\n\r\n";
+    for (int i = 0; i < tmpbuf.size(); i++) {
+        buf_fc_[i] = tmpbuf[i];
+    }
+    data_f_c_ = tmpbuf.length();
 }
 
 DirectConnection::~DirectConnection() {
@@ -58,18 +62,18 @@ DirectConnection::~DirectConnection() {
 
 }
 
-void DirectConnection::recvfc(const fd_set &rdfds) {
+int DirectConnection::recvfc(const fd_set &rdfds) {
     ssize_t ret;
     if (data_f_c_ == 0 && FD_ISSET(forwarding_socket_, &rdfds)) {
         fcoffset = 0;
         ret = recv(forwarding_socket_, &buf_fc_[0], MAX_SEND_SIZE, 0);
         if (ret == 0 || ret == -1) {
             active = false;
-            return;
+            return ret;
         }
         data_f_c_ = ret;
     }
-
+    return 0;
 }
 
 void DirectConnection::sendcf(const fd_set &wrfds) {

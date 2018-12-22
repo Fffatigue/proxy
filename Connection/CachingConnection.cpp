@@ -26,13 +26,17 @@ void CachingConnection::exchange_data(const fd_set &rdfds, const fd_set &wrfds) 
             }
         }
     }
-    if (active) {
-        sendfc(wrfds);
-        //TODO drop cache
-    }
-    if (active) {
-        sendcf(wrfds);
-        //TODO drop cache
+    if(connected) {
+        if (active) {
+            sendfc(wrfds);
+            if (!active) {
+                cache_->drop();
+            }
+        }
+        if (active) {
+            sendcf(wrfds);
+            //TODO drop cache
+        }
     }
 
 }
@@ -42,5 +46,13 @@ CachingConnection::CachingConnection(int client_socket, int forwarding_socket, s
                                                                                                forwarding_socket,
                                                                                                buf_cf,
                                                                                                serveraddr),
-                                                                              cache_(cache), isCacheable(true) {}
+                                                                              cache_(cache), isCacheable(true) {
+    if(!connected){
+        //TODO drop
+    }
+}
+
+CachingConnection::~CachingConnection() {
+    cache_->mark_no_using();
+}
 
