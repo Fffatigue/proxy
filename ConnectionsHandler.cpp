@@ -83,12 +83,21 @@ void ConnectionsHandler::add_connection(std::map<int, std::vector<char> >::itera
     if (!strncmp(method, "GET", 3)) {
         Utils::makeNewRequest(oldRequest, newRequest, headers, num_headers);
         std::pair<std::string, int> url_port;
+        url_port.second = -2;
         for (int i = 0; i < num_headers; i++) {
             if (!strncmp(headers[i].name, "Host", headers[i].name_len < 4 ? headers[i].name_len : 4)) {
                 url_port = Utils::parsePath(headers[i].value, headers[i].value_len);
                 break;
             }
-            //TODO no host error
+        }
+        //if no HOST param
+        if (url_port.second == -2) {
+#ifdef DEBUG
+            printf("Error connection 404\n");
+#endif
+            connections_.push_back(new ErrorConnection(client_sock, "HTTP/1.0 404 Not Found\r\n\r\n"));
+            queue_.erase(client);
+            return;
         }
         Cache *cache = cacheController_.getCache(std::string(path, path_len));
 
@@ -130,7 +139,7 @@ void ConnectionsHandler::add_connection(std::map<int, std::vector<char> >::itera
         }
     } else {
 #ifdef DEBUG
-        printf("Error connection to %.*s\n", (int) path_len, path);
+        printf("Error connection 501\n");
 #endif
         connections_.push_back(new ErrorConnection(client_sock, "HTTP/1.0 501 Not Implemented\r\n\r\n"));
     }
