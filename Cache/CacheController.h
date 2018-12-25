@@ -20,6 +20,7 @@ private:
     bool dropCache();
 public:
     Cache *getCache(std::string Path);
+    ~CacheController();
 };
 
 

@@ -57,3 +57,9 @@ bool CacheController::dropCache() {
     return false;
 }
 
+CacheController::~CacheController() {
+    for (CacheQueue::iterator it = cacheQueue_.begin(); it != cacheQueue_.end(); it++) {
+        delete(*it);
+    }
+}
+

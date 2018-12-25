@@ -166,3 +166,9 @@ void ConnectionsHandler::read_request(std::map<int, std::vector<char> >::iterato
 
 ConnectionsHandler::ConnectionsHandler() : maxfd_(0) {}
 
+ConnectionsHandler::~ConnectionsHandler() {
+    for (std::list<Connection *>::iterator i = connections_.begin(); i != connections_.end();) {
+        delete(*i);
+    }
+}
+

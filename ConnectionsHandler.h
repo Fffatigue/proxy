@@ -22,6 +22,7 @@ private:
 
 public:
     ConnectionsHandler();
+    ~ConnectionsHandler();
 
     void enqueue_connection(int client_sock);
 
